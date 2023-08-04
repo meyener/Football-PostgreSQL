@@ -1,0 +1,125 @@
+Futbol İstatistik Uygulaması
+
+Country: id, name
+Lig: id, adı, id_country(hangi ülkenin ligi)
+Takim: id, adı, id_leauge, kuruluş yılı, attığı gol, yediği gol, puan, seviye(1=en üst lig, 2, onun bir
+alt ligi gibi)
+Oyuncu: id, adı, soyadı, id_team, id_country(nereli), attığı gol
+
+1. Yukarıdaki tabloların create scriptlerini oluşturunuz.
+
+CREATE TABLE country (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE league (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  id_country INT NOT NULL,
+  FOREIGN KEY (id_country) REFERENCES country (id)
+);
+
+CREATE TABLE team (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  id_league INT NOT NULL,
+  founding_year INT NOT NULL,
+  goals_scored INT NOT NULL,
+  goals_conceded INT NOT NULL,
+  points INT NOT NULL,
+  level INT NOT NULL,
+  FOREIGN KEY (id_league) REFERENCES league (id)
+);
+
+CREATE TABLE player (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  surname VARCHAR(255) NOT NULL,
+  id_team INT NOT NULL,
+  id_country INT NOT NULL,
+  goals_scored INT NOT NULL,
+  FOREIGN KEY (id_team) REFERENCES team (id),
+  FOREIGN KEY (id_country) REFERENCES country (id)
+);
+
+
+2. Bu tabloları dolduran insert scriptler yazınız.
+
+INSERT INTO country (name) VALUES
+  ('Türkiye'),
+  ('İngiltere'),
+  ('Fransa');
+
+INSERT INTO league (name, id_country) VALUES
+  ('Süper Lig', 1),
+  ('Premier League', 2),
+  ('Ligue 1', 3);
+
+INSERT INTO team (name, id_league, founding_year, goals_scored, goals_conceded, points, level) VALUES
+  ('Fenerbahçe', 1, 1907, 100, 50, 50, 1),
+  ('Galatasaray', 1, 1905, 90, 40, 40, 1),
+  ('Beşiktaş', 1, 1903, 80, 30, 30, 1),
+  ('Arsenal', 2, 1886, 110, 40, 50, 1),
+  ('Manchester United', 2, 1878, 100, 30, 40, 1),
+  ('Liverpool', 2, 1892, 90, 20, 30, 1),
+  ('Paris Saint-Germain', 3, 1970, 120, 30, 40, 1),
+  ('Olympique Lyon', 3, 1896, 110, 20, 30, 1),
+  ('AS Monaco', 3, 1919, 100, 10, 20, 1);
+
+INSERT INTO player (name, surname, id_team, id_country, goals_scored) VALUES
+  ('Mesut Özil', 'Özil', 1, 1, 30),
+  ('Cristiano Ronaldo', 'Ronaldo', 2, 2, 20),
+  ('Lionel Messi', 'Messi', 3, 3, 15);
+
+
+3. İsmi “Türkiye” olan ülkenin liglerinin listesini getiren scripti yazınız.
+
+SELECT name FROM league WHERE id_country = 1;
+
+4. İsmi “Türkiye” olan ülkenin takımların listesini getiren scripti yazınız.
+
+SELECT name FROM team WHERE id_country = 1;
+
+5. İsmi “Türkiye” olan en üst seviyeli ligdeki puan tablosunu getiren scripti yazınız.
+
+SELECT team.name, team.goals_scored, team.goals_conceded, team.points
+FROM team
+JOIN league ON team.id_league = league.id
+WHERE league.id_country = 1 AND league.level = 1
+ORDER BY points DESC;
+
+6. Türkiye liglerindeki puan ortalamalarını gösteren scrpiti yazınız.
+
+SELECT league.name, AVG(team.points)
+FROM league
+JOIN team ON league.id = team.id_league
+WHERE league.id_country = 1
+GROUP BY league
+
+7. Bir ligin Gol kralını getiren scprit yazınız. (oyuncu adı, soyadı, takım adı, nereli olduğu)
+
+SELECT player.name, player.surname, player.team_name,player.id_country FROM player
+JOIN team ON player.id_team = team.id
+JOIN league ON team.id_league = league.id
+WHERE league.name = '<<<<<<Lig Adı>>>>'
+ORDER BY goals_scored DESC;
+
+8. Tüm liglerde attığı gol yediği golden daha küçük olan takımları getiren scripti yazınız.
+
+SELECT team.name,team.goals_scored,team.goals_conceded
+FROM team
+JOIN league ON team.id_league = league.id
+WHERE league.id_country = 1
+AND team.goals_scored < team.goals_conceded;
+
+9. Bir takımın oyuncularının toplam gol sayısını ve takımın gol sayısını yan yana getiren bir
+scprit yazınız. (kontrol sorgusu gibi, birisi takım verisi, diğeri oyuncuların toplamı olacak)
+
+SELECT team.name,team.goals_scored,
+SUM(player.goals_scored)
+FROM team
+JOIN player ON team.id = player.id_team
+GROUP BY team.name;
+
+
